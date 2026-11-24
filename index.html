@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transformada de Laplace y Fourier | UNSA Telecomunicaciones</title>
+  <!-- MathJax para renderizado profesional de fórmulas matemáticas -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #131c31;
+      --surface-light: #1e293b;
+      --primary: #38bdf8;
+      --secondary: #f59e0b;
+      --accent: #10b981;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Barra superior */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand span.uni {
+      font-size: 0.75rem;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .brand h1 {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    /* Navegación por pestañas / diapositivas */
+    nav.slide-nav {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    nav.slide-nav button {
+      background: var(--surface-light);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    nav.slide-nav button:hover {
+      color: var(--text);
+      border-color: var(--primary);
+    }
+    nav.slide-nav button.active {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+
+    /* Contenedor principal de diapositiva */
+    main {
+      flex: 1;
+      max-width: 1120px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1.2rem;
+    }
+
+    .slide {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.35);
+      animation: fadeIn 0.3s ease;
+    }
+    .slide.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .slide-tag {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .slide h2 {
+      font-size: 1.55rem;
+      color: #fff;
+      margin-top: 0.3rem;
+    }
+
+    /* Cajas de contenido y fórmulas */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 820px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .card h3 {
+      color: var(--primary);
+      font-size: 1.08rem;
+      margin-bottom: 0.6rem;
+    }
+    .formula-box {
+      background: #090e1a;
+      border-left: 4px solid var(--secondary);
+      padding: 0.9rem 1.1rem;
+      border-radius: 6px;
+      margin: 0.8rem 0;
+      overflow-x: auto;
+      font-size: 1.05rem;
+    }
+
+    /* Tablas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+    }
+    th {
+      background: #0f172a;
+      color: var(--primary);
+    }
+    tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+    /* Gráficos interactivos */
+    .canvas-wrapper {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 0.8rem;
+      text-align: center;
+    }
+    canvas {
+      width: 100%;
+      max-height: 270px;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+      font-size: 0.88rem;
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text);
+    }
+
+    /* Leyenda explicativa de cada diapositiva */
+    .legend-box {
+      margin-top: 1.8rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .legend-box strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .legend-box p {
+      font-size: 0.94rem;
+      color: #e2e8f0;
+    }
+
+    /* Botones inferior anterior / siguiente */
+    .footer-controls {
+      max-width: 1120px;
+      width: 100%;
+      margin: 0 auto 2rem;
+      padding: 0 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-nav {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.65rem 1.3rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    .btn-nav:hover:not(:disabled) {
+      background: var(--primary);
+      color: #0f172a;
+    }
+    .btn-nav:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .counter {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="uni">UNSA • Ing. en Telecomunicaciones • Cód. 2502117</span>
+    <h1>Cap. 12: Transformada de Laplace, Fourier y Traslaciones</h1>
+  </div>
+  <nav class="slide-nav" id="navButtons"></nav>
+</header>
+
+<main>
+  <!-- DIAPOSITIVA 1: PORTADA Y CONTEXTO -->
+  <section class="slide active" data-title="1. Portada">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 1 • PRESENTACIÓN ACADÉMICA</span>
+        <h2>Señales, Cambio, Modelos y Diseño</h2>
+      </div>
+      <span style="color:var(--muted); font-size:0.88rem;">Autor: Mg. Juan Carlos Hihuaña Hallasi • 2026-B</span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Idea Central del Capítulo</h3>
+        <p><em>"La ingeniería comienza cuando el cambio puede expresarse con precisión."</em></p>
+        <p style="margin-top:0.7rem;">La transformada representa una señal temporal $f(t)$ en otra variable compleja $s$. En Telecomunicaciones, distinguir entre una <strong>modulación exponencial</strong> y un <strong>retardo temporal</strong> permite modelar con exactitud filtros, envolventes amortiguadas y pulsos de transmisión.</p>
+      </div>
+      <div class="card">
+        <h3>Ficha del Curso (Semana 12)</h3>
+        <table>
+          <tr><th>Asignatura</th><td>Ecuaciones Diferenciales (3.er Semestre)</td></tr>
+          <tr><th>Unidad / Tema</th><td>Unidad III • Cap. VI: Transformada de Laplace</td></tr>
+          <tr><th>Contenido</th><td>Definición, convergencia, inversa, traslación en $s$ y en $t$</td></tr>
+          <tr><th>Siguiente paso</th><td>Semana 13: Derivadas y solución de EDO con Laplace</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 1:</strong>
+      <p>Esta portada contextualiza el rol de las transformadas integrales en Ingeniería en Telecomunicaciones: en lugar de resolver ecuaciones diferenciales difíciles directamente en el tiempo ($t$), traducimos las señales a un dominio algebraico ($s$) donde las operaciones complejas se vuelven sumas y multiplicaciones.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 2: ¿QUÉ ES UNA TRANSFORMADA Y PARA QUÉ SIRVE? (CON GRÁFICO) -->
+  <section class="slide" data-title="2. ¿Para qué sirve?">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 2 • INTUICIÓN GRÁFICA</span>
+        <h2>¿Qué es una Transformada y para qué sirve?</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>El concepto de "Cambiar de Lentes"</h3>
+        <p>Una <strong>transformada integral</strong> es un operador matemático que toma una función que depende del tiempo $t$ (difícil de analizar cuando hay múltiples ondas mezcladas o derivadas) y la proyecta en otro dominio (frecuencia $\omega$ o frecuencia compleja $s$).</p>
+        <ul style="margin-left:1.2rem; margin-top:0.7rem; color:#cbd5e1;">
+          <li><strong>En el tiempo ($t$):</strong> Vemos cómo sube y baja el voltaje instante a instante.</li>
+          <li><strong>En la frecuencia ($\omega$ / $s$):</strong> Vemos qué frecuencias puras componen esa señal y qué tan rápido se amortiguan.</li>
+          <li><strong>Utilidad en Ingeniería:</strong> Convierte ecuaciones diferenciales (cálculo) en ecuaciones algebraicas (polinomios fáciles de despejar).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Visualización: Dominio del Tiempo vs. Frecuencia</h3>
+        <p style="font-size:0.88rem; color:var(--muted);">Suma dos ondas senoidales en el tiempo (izquierda) y observa cómo la transformada separa sus picos exactos (derecha):</p>
+        <div class="canvas-wrapper">
+          <canvas id="canvasIntro" width="480" height="220"></canvas>
+          <div class="controls">
+            <label>Frecuencia 1: <input type="range" id="f1Slider" min="1" max="5" value="2"> <span id="f1Val">2 Hz</span></label>
+            <label>Frecuencia 2: <input type="range" id="f2Slider" min="6" max="12" value="8"> <span id="f2Val">8 Hz</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 2:</strong>
+      <p>En el gráfico superior se observa una señal compuesta $y(t) = \sin(2\pi f_1 t) + 0.6\sin(2\pi f_2 t)$. A simple vista en el tiempo parece una onda enredada, pero al aplicar la transformada (gráfico inferior en barras), aparecen dos líneas limpias ubicadas exactamente en $f_1$ y $f_2$. Así es como un receptor de radio o telecomunicaciones sintoniza y filtra señales.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 3: CÓMO SE FORMA LA FÓRMULA DE FOURIER Y PASA A LAPLACE -->
+  <section class="slide" data-title="3. Fórmula de Fourier → Laplace">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 3 • DEDUCCIÓN FUNDAMENTAL</span>
+        <h2>¿Cómo se forma la Fórmula de Fourier y cómo nace Laplace?</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>1. Construcción de la Transformada de Fourier</h3>
+        <p>Joseph Fourier demostró que cualquier señal puede descomponerse en ondas senoidales puras. Usando la identidad de Euler ($e^{-i\omega t} = \cos\omega t - i\sin\omega t$), para medir cuánta frecuencia $\omega$ contiene una señal $f(t)$, multiplicamos $f(t)$ por $e^{-i\omega t}$ y sumamos (integramos) en todo el tiempo:</p>
+        <div class="formula-box">
+          $$\mathcal{F}[f](\omega) = \int_{-\infty}^{\infty} f(t)\,e^{-i\omega t}\,dt$$
+        </div>
+        <p style="font-size:0.9rem;"><strong>El problema de Fourier:</strong> Si la señal $f(t)$ crece con el tiempo (como una rampa $t$ o una exponencial $e^{2t}$) o no se apaga, la integral diverge ($\infty$) y Fourier no existe.</p>
+      </div>
+
+      <div class="card">
+        <h3>2. El salto a la Transformada de Laplace</h3>
+        <p>Para arreglar la divergencia y estudiar sistemas causales que se encienden en $t = 0$, Pierre-Simon Laplace introdujo un <strong>factor de amortiguamiento real</strong> $e^{-\sigma t}$ ($\sigma > 0$) que "aplasta" el crecimiento de $f(t)$:</p>
+        <div class="formula-box">
+          $$\int_{0}^{\infty} \big[f(t)\,e^{-\sigma t}\big] e^{-i\omega t}\,dt = \int_{0}^{\infty} f(t)\,e^{-(\sigma + i\omega)t}\,dt$$
+        </div>
+        <p>Definiendo la frecuencia compleja $s = \sigma + i\omega$, obtenemos la <strong>Transformada Unilateral de Laplace</strong>:</p>
+        <div class="formula-box">
+          $$F(s) = \mathcal{L}[f](s) = \int_{0}^{\infty} e^{-st} f(t)\,dt$$
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper" style="margin-top:1rem;">
+      <canvas id="canvasFourierLaplace" width="850" height="190"></canvas>
+      <div class="controls">
+        <label>Factor de amortiguamiento $\sigma$: <input type="range" id="sigmaSlider" min="0" max="1.5" step="0.1" value="0.6"> <span id="sigmaVal">0.6</span></label>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 3:</strong>
+      <p>La fórmula de Fourier multiplica la señal por un giro complejo puro $e^{-i\omega t}$ (oscilación pura). Al añadir el término atenuador $e^{-\sigma t}$, Laplace obliga a que incluso señales crecientes (curva punteada roja en el gráfico) decaigan hacia cero (curva verde), garantizando que el área bajo la curva (la integral impropia) sea finita.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 4: EXISTENCIA, CONVERGENCIA Y TABLA BÁSICA -->
+  <section class="slide" data-title="4. Tabla y Convergencia">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 4 • PARES FUNDAMENTALES</span>
+        <h2>Condiciones de Existencia y Tabla Básica de Laplace</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Criterio de Orden Exponencial</h3>
+        <p>Para que $\mathcal{L}[f](s)$ exista, $f(t)$ debe ser continua por tramos en $[0,\infty)$ y no crecer más rápido que una exponencial: $|f(t)| \le M e^{at}$ para $t \ge T$.</p>
+        <div class="formula-box">
+          $$\text{Convergencia: } \operatorname{Re}(s) > a$$
+        </div>
+        <p style="font-size:0.9rem; color:#fca5a5;"><strong>Precaución:</strong> Funciones como $f(t) = e^{t^2}$ crecen más rápido que cualquier $e^{at}$, por lo que <strong>no tienen transformada de Laplace clásica</strong>.</p>
+        <p style="font-size:0.9rem; margin-top:0.5rem;"><strong>Linealidad:</strong> $\mathcal{L}[Af(t) + Bg(t)] = AF(s) + BG(s)$.</p>
+      </div>
+
+      <div class="card">
+        <h3>Tabla de Pares Básicos ($s$ real)</h3>
+        <table>
+          <thead>
+            <tr><th>Señal $f(t)$</th><th>Transformada $F(s)$</th><th>Región (ROC)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$1$</td><td>$\frac{1}{s}$</td><td>$s > 0$</td></tr>
+            <tr><td>$t^n$ ($n \in \mathbb{N}_0$)</td><td>$\frac{n!}{s^{n+1}}$</td><td>$s > 0$</td></tr>
+            <tr><td>$e^{at}$</td><td>$\frac{1}{s - a}$</td><td>$s > a$</td></tr>
+            <tr><td>$\cos(\omega t)$</td><td>$\frac{s}{s^2 + \omega^2}$</td><td>$s > 0$</td></tr>
+            <tr><td>$\sin(\omega t)$</td><td>$\frac{\omega}{s^2 + \omega^2}$</td><td>$s > 0$</td></tr>
+            <tr><td>$\cosh(bt)$</td><td>$\frac{s}{s^2 - b^2}$</td><td>$s > |b|$</td></tr>
+            <tr><td>$\sinh(bt)$</td><td>$\frac{b}{s^2 - b^2}$</td><td>$s > |b|$</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 4:</strong>
+      <p>Cada transformada lleva asociada obligatoriamente su Región de Convergencia (ROC). Observa la diferencia clave entre seno y coseno: $\cos(\omega t)$ tiene $s$ en el numerador, mientras que $\sin(\omega t)$ tiene la frecuencia $\omega$ en el numerador. Al calcular la transformada inversa $\mathcal{L}^{-1}$, siempre debes ajustar el numerador antes de aplicar la tabla.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 5: INVERSA, FRACCIONES PARCIALES Y TRASLACIÓN EN S -->
+  <section class="slide" data-title="5. Traslación en s e Inversa">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 5 • PROPIEDAD OPERACIONAL I</span>
+        <h2>1.ª Propiedad de Traslación (en $s$) e Inversión Algebraica</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Multiplicación por Exponencial (Modulación)</h3>
+        <p>Multiplicar una señal en el tiempo por $e^{at}$ no retarda la señal; cambia su envolvente de amplitud y desplaza la variable $s$:</p>
+        <div class="formula-box">
+          $$\mathcal{L}[e^{at}f(t)](s) = F(s - a) \iff \mathcal{L}^{-1}[F(s-a)] = e^{at}f(t)$$
+        </div>
+        <p><strong>¡Cuidado con el signo!</strong></p>
+        <ul style="margin-left:1.2rem; font-size:0.92rem;">
+          <li>$F(s + 3) \implies e^{-3t}f(t)$ (amortiguamiento decreciente).</li>
+          <li>$F(s - 2) \implies e^{+2t}f(t)$ (envolvente creciente).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Métodos de Transformada Inversa $\mathcal{L}^{-1}[F(s)]$</h3>
+        <p><strong>A. Fracciones Parciales (Factores repetidos):</strong></p>
+        <div class="formula-box">
+          $$G(s) = \frac{1}{s(s+2)^2} = \frac{1/4}{s} - \frac{1/4}{s+2} - \frac{1/2}{(s+2)^2}$$
+          $$g(t) = \frac{1}{4} - \frac{1}{4}e^{-2t} - \frac{1}{2}t e^{-2t}$$
+        </div>
+        <p><strong>B. Completar el cuadrado (Cuadrática irreducible):</strong></p>
+        <div class="formula-box">
+          $$\frac{3s+7}{s^2+4s+13} = 3\frac{s+2}{(s+2)^2+9} + \frac{1}{3}\frac{3}{(s+2)^2+9}$$
+          $$f(t) = e^{-2t}\left(3\cos 3t + \frac{1}{3}\sin 3t\right)$$
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 5:</strong>
+      <p>La primera propiedad de traslación ocurre en el eje $s$. Cuando veas un desplazamiento $(s+a)$ en todas las apariciones de $s$ dentro de una fracción, significa que en el tiempo la señal original está multiplicada por una envolvente exponencial $e^{-at}$ que atenúa la oscilación desde $t=0$ sin retrasar su inicio.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 6: ESCALÓN UNITARIO, RETARDO EN EL TIEMPO Y PULSOS (CON GRÁFICO) -->
+  <section class="slide" data-title="6. Traslación en t y Pulsos">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 6 • RETARDO TEMPORAL Y PULSOS</span>
+        <h2>2.ª Propiedad de Traslación (en $t$) y Ventanas</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Escalón Unitario $u_a(t)$ y Retardo</h3>
+        <p>El escalón $u_a(t) = u(t-a)$ vale $0$ para $t < a$ y $1$ para $t \ge a$. Sirve para encender una señal en el instante $a$:</p>
+        <div class="formula-box">
+          $$\mathcal{L}[u_a(t)f(t-a)](s) = e^{-as}F(s), \quad a \ge 0$$
+        </div>
+        <p style="font-size:0.9rem;"><strong>Regla de oro:</strong> Para aplicar la fórmula, la función debe estar escrita en el tiempo local $(t-a)$. Si tienes $u_\pi(t)\sin(t)$, reescribe: $\sin(t) = -\sin(t-\pi)$.</p>
+        <p style="font-size:0.9rem; margin-top:0.5rem;"><strong>Pulso Rectangular:</strong> $p(t) = 2[u_1(t) - u_3(t)] \implies P(s) = \frac{2}{s}(e^{-s} - e^{-3s})$.</p>
+      </div>
+
+      <div class="card">
+        <h3>Gráfico Comparativo: Retardo vs. Pulsos Finitos</h3>
+        <div class="canvas-wrapper">
+          <canvas id="canvasRetardo" width="480" height="230"></canvas>
+          <div class="controls">
+            <label>Retardo $a$: <input type="range" id="delaySlider" min="0" max="3" step="0.2" value="2"> <span id="delayVal">2.0 s</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 6:</strong>
+      <p>Arriba en el gráfico se replica la Figura 1 del texto: la onda amortiguada original $f(t)=e^{-t}\sin(3t)$ (azul) y su copia retardada $g(t)=u_a(t)f(t-a)$ (naranja). Observa que la amplitud del primer pico no disminuye al retardarla porque el tiempo se reinicia en $t=a$. Abajo se muestran el pulso rectangular (área $2\times 2 = 4$) y el pulso triangular (área $\frac{2\times 1}{2} = 1$), cuyas áreas coinciden con $P(0)$ y $R(0)$.</p>
+    </div>
+  </section>
+
+  <!-- DIAPOSITIVA 7: ERRORES FRECUENTES Y APLICACIÓN EN TELECOMUNICACIONES -->
+  <section class="slide" data-title="7. Aplicación y Errores">
+    <div class="slide-header">
+      <div>
+        <span class="slide-tag">DIAPOSITIVA 7 • SÍNTESIS Y VERIFICACIÓN</span>
+        <h2>Aplicación en Receptor y Errores Frecuentes a Evitar</h2>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Ejemplo 15: Señal de Voltaje en Receptor</h3>
+        <p>Una salida de voltaje inicia tras un retardo de $0.5\text{ s}$, con amplitud $2\text{ V}$, tasa de amortiguamiento $2\text{ s}^{-1}$ y frecuencia angular $3\text{ rad/s}$:</p>
+        <div class="formula-box">
+          $$v(t) = 2u_{1/2}(t)e^{-2(t-1/2)}\sin\big[3(t-1/2)\big]\text{ V}$$
+          $$V(s) = e^{-s/2}\frac{6}{(s+2)^2 + 9}\text{ V}\cdot\text{s}, \quad s > -2$$
+        </div>
+        <p style="font-size:0.9rem;">Aquí se combinan ambas traslaciones: $e^{-s/2}$ indica el retardo de $0.5\text{ s}$ y $(s+2)$ indica el amortiguamiento exponencial.</p>
+      </div>
+
+      <div class="card">
+        <h3>Tabla de Errores Frecuentes</h3>
+        <table>
+          <thead>
+            <tr><th>Error observado</th><th>Corrección matemática</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Creer que $F(s+a)$ es un retardo</td><td>$s+a$ es multiplicación por $e^{-at}$; el retardo es $e^{-as}F(s)$.</td></tr>
+            <tr><td>Aplicar retardo a $u_a(t)f(t)$ directo</td><td>Reescribir primero $f(t)$ en función de $(t-a)$.</td></tr>
+            <tr><td>Afirmar $\mathcal{L}[fg] = \mathcal{L}[f]\mathcal{L}[g]$</td><td><strong>Falso.</strong> $\mathcal{L}[1\cdot 1] = \frac{1}{s} \ne \frac{1}{s}\cdot\frac{1}{s} = \frac{1}{s^2}$.</td></tr>
+            <tr><td>Omitir potencias en factor repetido</td><td>Para $(s+2)^2$, incluir $\frac{B}{s+2} + \frac{C}{(s+2)^2}$.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <strong>Leyenda de la Diapositiva 7:</strong>
+      <p>Esta última diapositiva resume las reglas de control de calidad antes de entregar un problema: verifica siempre las unidades ($\text{V}\cdot\text{s}$), comprueba que no hayas distribuido la transformada sobre un producto de funciones y distingue claramente entre un factor exponencial en $s$ (retardo en el tiempo) y un desplazamiento en $s$ (amortiguamiento en el tiempo).</p>
+    </div>
+  </section>
+</main>
+
+<div class="footer-controls">
+  <button class="btn-nav" id="prevBtn" onclick="changeSlide(-1)">← Anterior</button>
+  <span class="counter" id="slideCounter">Diapositiva 1 de 7</span>
+  <button class="btn-nav" id="nextBtn" onclick="changeSlide(1)">Siguiente →</button>
+</div>
+
+<script>
+  // Control de navegación de diapositivas
+  const slides = document.querySelectorAll('.slide');
+  const navContainer = document.getElementById('navButtons');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('slideCounter');
+  let currentSlide = 0;
+
+  slides.forEach((slide, index) => {
+    const btn = document.createElement('button');
+    btn.textContent = slide.dataset.title;
+    btn.onclick = () => goToSlide(index);
+    navContainer.appendChild(btn);
+  });
+
+  function goToSlide(index) {
+    slides[currentSlide].classList.remove('active');
+    navContainer.children[currentSlide].classList.remove('active');
+    currentSlide = index;
+    slides[currentSlide].classList.add('active');
+    navContainer.children[currentSlide].classList.add('active');
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === slides.length - 1;
+    counter.textContent = `Diapositiva ${currentSlide + 1} de ${slides.length}`;
+    drawAllCharts();
+  }
+
+  function changeSlide(step) {
+    const next = currentSlide + step;
+    if (next >= 0 && next < slides.length) goToSlide(next);
+  }
+
+  // Gráfico 1: Tiempo vs Frecuencia (Diapositiva 2)
+  function drawIntroChart() {
+    const canvas = document.getElementById('canvasIntro');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const f1 = parseFloat(document.getElementById('f1Slider').value);
+    const f2 = parseFloat(document.getElementById('f2Slider').value);
+    document.getElementById('f1Val').textContent = f1 + ' Hz';
+    document.getElementById('f2Val').textContent = f2 + ' Hz';
+
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Mitad izquierda: Dominio del tiempo
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath(); ctx.moveTo(10, h/2); ctx.lineTo(w*0.55, h/2); ctx.stroke();
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x <= w*0.52; x++) {
+      const t = x / (w*0.52);
+      const y = Math.sin(2 * Math.PI * f1 * t) + 0.6 * Math.sin(2 * Math.PI * f2 * t);
+      const py = h/2 - y * 45;
+      x === 0 ? ctx.moveTo(10 + x, py) : ctx.lineTo(10 + x, py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Dominio del Tiempo f(t)', 15, 20);
+
+    // Separador
+    ctx.strokeStyle = '#475569';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(w*0.58, 10); ctx.lineTo(w*0.58, h-10); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Mitad derecha: Espectro de Frecuencia
+    const baseX = w * 0.62;
+    const baseY = h - 35;
+    ctx.strokeStyle = '#64748b';
+    ctx.beginPath(); ctx.moveTo(baseX, baseY); ctx.lineTo(w - 15, baseY); ctx.stroke();
+    ctx.fillText('Dominio Transformado F(ω)', baseX, 20);
+
+    // Barra f1
+    const x1 = baseX + (f1 / 14) * (w * 0.33);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(x1 - 6, baseY - 110, 12, 110);
+    ctx.fillText(f1 + 'Hz', x1 - 12, baseY + 15);
+
+    // Barra f2
+    const x2 = baseX + (f2 / 14) * (w * 0.33);
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(x2 - 6, baseY - 66, 12, 66);
+    ctx.fillText(f2 + 'Hz', x2 - 12, baseY + 15);
+  }
+
+  // Gráfico 2: Amortiguamiento de Laplace vs Fourier (Diapositiva 3)
+  function drawFourierLaplaceChart() {
+    const canvas = document.getElementById('canvasFourierLaplace');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sigma = parseFloat(document.getElementById('sigmaSlider').value);
+    document.getElementById('sigmaVal').textContent = sigma.toFixed(1);
+
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const midY = h * 0.65;
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath(); ctx.moveTo(30, midY); ctx.lineTo(w - 20, midY); ctx.stroke();
+
+    // Señal creciente e^(0.4t)*cos(4t) sin amortiguar (Fourier diverge)
+    ctx.strokeStyle = '#f87171';
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    for (let px = 0; px < w - 60; px++) {
+      const t = (px / (w - 60)) * 5;
+      const val = Math.exp(0.35 * t) * Math.cos(5 * t);
+      const y = midY - val * 25;
+      px === 0 ? ctx.moveTo(30 + px, y) : ctx.lineTo(30 + px, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Señal ponderada por e^(-sigma*t) (Laplace converge)
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px < w - 60; px++) {
+      const t = (px / (w - 60)) * 5;
+      const val = Math.exp((0.35 - sigma) * t) * Math.cos(5 * t);
+      const y = midY - val * 25;
+      px === 0 ? ctx.moveTo(30 + px, y) : ctx.lineTo(30 + px, y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#f87171';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('--- Señal f(t) = e^(0.35t)cos(5t) (Fourier diverge)', 40, 22);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`— Con factor Laplace e^(-${sigma.toFixed(1)}t)f(t) (Converge cuando σ > 0.35)`, 40, 42);
+  }
+
+  // Gráfico 3: Retardo y Pulsos (Diapositiva 6)
+  function drawRetardoChart() {
+    const canvas = document.getElementById('canvasRetardo');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const delay = parseFloat(document.getElementById('delaySlider').value);
+    document.getElementById('delayVal').textContent = delay.toFixed(1) + ' s';
+
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Panel superior: Señal original vs retardada
+    const topBase = 75;
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath(); ctx.moveTo(25, topBase); ctx.lineTo(w - 15, topBase); ctx.stroke();
+
+    // f(t) = e^-t sin(3t)
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= w - 45; px++) {
+      const t = (px / (w - 45)) * 6;
+      const val = Math.exp(-t) * Math.sin(3 * t);
+      const y = topBase - val * 75;
+      px === 0 ? ctx.moveTo(25 + px, y) : ctx.lineTo(25 + px, y);
+    }
+    ctx.stroke();
+
+    // g(t) = u_a(t) f(t - a)
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for (let px = 0; px <= w - 45; px++) {
+      const t = (px / (w - 45)) * 6;
+      const val = t < delay ? 0 : Math.exp(-(t - delay)) * Math.sin(3 * (t - delay));
+      const y = topBase - val * 75;
+      px === 0 ? ctx.moveTo(25 + px, y) : ctx.lineTo(25 + px, y);
+    }
+    ctx.stroke();
+
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = '#38bdf8'; ctx.fillText('— Original f(t)', 30, 16);
+    ctx.fillStyle = '#f59e0b'; ctx.fillText(`— Retardada u_${delay.toFixed(1)}(t)f(t-${delay.toFixed(1)})`, 140, 16);
+
+    // Panel inferior: Pulso rectangular y triangular
+    const botBase = h - 22;
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath(); ctx.moveTo(25, botBase); ctx.lineTo(w - 15, botBase); ctx.stroke();
+
+    const scaleX = (w - 45) / 6;
+    // Pulso rectangular 2[u1(t) - u3(t)]
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(25, botBase);
+    ctx.lineTo(25 + 1*scaleX, botBase);
+    ctx.lineTo(25 + 1*scaleX, botBase - 65);
+    ctx.lineTo(25 + 3*scaleX, botBase - 65);
+    ctx.lineTo(25 + 3*scaleX, botBase);
+    ctx.lineTo(w - 15, botBase);
+    ctx.stroke();
+
+    // Pulso triangular
+    ctx.strokeStyle = '#a855f7';
+    ctx.beginPath();
+    ctx.moveTo(25, botBase);
+    ctx.lineTo(25 + 1*scaleX, botBase);
+    ctx.lineTo(25 + 2*scaleX, botBase - 32.5);
+    ctx.lineTo(25 + 3*scaleX, botBase);
+    ctx.lineTo(w - 15, botBase);
+    ctx.stroke();
+
+    ctx.fillStyle = '#60a5fa'; ctx.fillText('— Pulso Rectangular (Área=4)', 30, 132);
+    ctx.fillStyle = '#a855f7'; ctx.fillText('— Pulso Triangular (Área=1)', 225, 132);
+  }
+
+  function drawAllCharts() {
+    drawIntroChart();
+    drawFourierLaplaceChart();
+    drawRetardoChart();
+  }
+
+  document.getElementById('f1Slider').addEventListener('input', drawIntroChart);
+  document.getElementById('f2Slider').addEventListener('input', drawIntroChart);
+  document.getElementById('sigmaSlider').addEventListener('input', drawFourierLaplaceChart);
+  document.getElementById('delaySlider').addEventListener('input', drawRetardoChart);
+
+  goToSlide(0);
+</script>
+</body>
+</html>
